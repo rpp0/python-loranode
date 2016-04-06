@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 
-import rpyutils
 import configparser
-from rpyutils import printd, Level, Color, clr
-from loracontroller import LoRaController
-
-rpyutils.VERBOSITY = Level.DEBUG
+from rpyutils import printd, Level, Color, clr, set_debug_level
+from loracontroller import RN2483Controller
 
 # LoRaController ABP based join and ACK test
 if __name__ == "__main__":
+    set_debug_level(Level.DEBUG)
+
     # Parse config
     cp = configparser.ConfigParser()
     cp.read('lora.cfg')
     config = cp['DEFAULT']
 
     # Test controller
-    lc = LoRaController(config.get("port"))
+    lc = RN2483Controller(config.get("port"))
     if lc.test():
-        printd("[+] Connected to LoRa device", Level.INFO)
+        printd("[+] Connected to LoRa RN2483 device", Level.INFO)
     else:
         printd(clr(Color.YELLOW, "[-] Failed to get version from LoRa device"), Level.WARNING)
 

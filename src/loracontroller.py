@@ -1,17 +1,13 @@
-import rpyutils
 import serial
 from rpyutils import printd, Level, Color, clr
 from commands import *
 from time import sleep
 
-
 class LoRaController():
-    def __init__(self, port, baudrate=57600, reset=True):
-        self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
-        if reset:
-            self.reset()
-        self.hweui = self.serial_sr(CMD_GET_HWEUI)
-        self.joined = False
+    def __init__(self, port):
+        self.port = port
+
+        self.hweui = None
         self.appkey = None
         self.appeui = None
         self.deveui = None
@@ -19,11 +15,33 @@ class LoRaController():
         self.appskey = None
         self.devaddr = None
 
+        self.joined = False
+
+    def join_otaa(self, appkey, appeui, deveui):
+        raise NotImplementedError()
+
+    def join_abp(self, nwkskey, appskey, devaddr):
+        raise NotImplementedError()
+
+    def send(self, data, port=1, ack=True):
+        raise NotImplementedError()
+
+    def recv(self, port=1):
+        raise NotImplementedError()
+
+class RN2483Controller(LoRaController):
+    def __init__(self, port, baudrate=57600, reset=True):
+        self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
+        self.hweui = self.serial_sr(CMD_GET_HWEUI)
+
+        if reset:
+            self.reset()
+
     def __del__(self):
         if self.device.is_open:
             self.device.close()
 
-    # Low level serial communication
+    # RN2483 modem uses serial communication for commands
     def serial_sr(self, cmd, args=[]):
         # Add arguments
         if isinstance(args, list):
@@ -43,7 +61,6 @@ class LoRaController():
 
             return None
 
-    # Test serial device
     def test(self):
         return len(self.serial_sr(CMD_GET_VERSION)) > 0
 
