@@ -1,0 +1,4 @@
+*.pyc
+*.cfg
+samples/
+__pycache__
