@@ -2,7 +2,7 @@
 
 import configparser
 from rpyutils import printd, Level, Color, clr, set_debug_level
-from loracontroller import RN2483Controller
+from loranode import RN2483Controller
 
 # LoRaController ABP based join and ACK test
 if __name__ == "__main__":

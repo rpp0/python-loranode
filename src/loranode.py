@@ -29,6 +29,12 @@ class LoRaController():
     def recv(self, port=1):
         raise NotImplementedError()
 
+    def send_p2p(self, data):
+        raise NotImplementedError()
+
+    def recv_p2p(self):
+        raise NotImplementedError()
+
 class RN2483Controller(LoRaController):
     def __init__(self, port, baudrate=57600, reset=True):
         self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
@@ -117,6 +123,12 @@ class RN2483Controller(LoRaController):
         else:
             printd("Server did not acknowledge data '" + str(data) + "' on port " + str(port), Level.DEBUG)
             return False
+
+    def send_p2p(self, data):
+        raise NotImplementedError()
+
+    def recv_p2p(self):
+        raise NotImplementedError()
 
     def set_pwridx(self, pwridx):
         self.serial_sr(CMD_SET_PWRIDX, str(pwridx))
