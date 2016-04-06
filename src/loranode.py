@@ -125,10 +125,23 @@ class RN2483Controller(LoRaController):
             return False
 
     def send_p2p(self, data):
-        raise NotImplementedError()
+        self.serial_sr(CMD_MAC_PAUSE)
+
+        self.serial_sr(CMD_TX_RADIO, data)
+        r = self.serial_r()
+
+        self.serial_sr(CMD_MAC_RESUME)
 
     def recv_p2p(self):
-        raise NotImplementedError()
+        self.serial_sr(CMD_MAC_PAUSE)
+
+        self.serial_sr(CMD_RX_RADIO, "0")
+        r = self.serial_r()
+        data = r[8:].strip()
+
+        self.serial_sr(CMD_MAC_RESUME)
+
+        return data
 
     def set_pwridx(self, pwridx):
         self.serial_sr(CMD_SET_PWRIDX, str(pwridx))

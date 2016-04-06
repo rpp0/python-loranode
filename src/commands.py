@@ -22,6 +22,8 @@ CMD_MAC_PAUSE = "mac pause"
 CMD_MAC_RESUME = "mac resume"
 CMD_SET_ADR = "mac set adr"
 CMD_TX = "mac tx"
+CMD_TX_RADIO = "radio tx"
+CMD_RX_RADIO = "radio rx"
 
 CMD_GET_PWR = "radio get pwr"
 CMD_GET_PWRIDX = "mac get pwridx"
