@@ -7,6 +7,7 @@ CMD_FACTORY_RESET = "sys factoryRESET"
 CMD_RESET = "sys reset"
 CMD_GET_VERSION = "sys get ver"
 CMD_GET_HWEUI = "sys get hweui"
+CMD_SLEEP = "sys sleep"
 
 CMD_SET_APPKEY = "mac set appkey"
 CMD_SET_APPEUI = "mac set appeui"
@@ -29,6 +30,8 @@ CMD_GET_PWR = "radio get pwr"
 CMD_GET_PWRIDX = "mac get pwridx"
 CMD_SET_PWR = "radio set pwr"
 CMD_SET_PWRIDX = "mac set pwridx"
+CMD_GET_RXDELAY1 = "mac get rxdelay1"
+CMD_GET_RXDELAY2 = "mac get rxdelay2"
 
 # Status codes
 S_ACCEPTED = "accepted"

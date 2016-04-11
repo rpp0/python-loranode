@@ -38,10 +38,13 @@ class LoRaController():
 class RN2483Controller(LoRaController):
     def __init__(self, port, baudrate=57600, reset=True):
         self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
-        self.hweui = self.serial_sr(CMD_GET_HWEUI)
 
         if reset:
             self.reset()
+
+        self.hweui = self.serial_sr(CMD_GET_HWEUI)
+        self.rxdelay1 = self.serial_sr(CMD_GET_RXDELAY1)
+        self.rxdelay2 = self.serial_sr(CMD_GET_RXDELAY2)
 
     def __del__(self):
         if self.device.is_open:
@@ -159,3 +162,9 @@ class RN2483Controller(LoRaController):
             return True
         else:
             return False
+
+    # TODO: Should be a serial send instead of send/receive. The OK
+    # is received after the sleep duration
+    def sleep(self, ms):
+        self.serial_sr(CMD_SLEEP, str(ms))
+        sleep(ms/1000)
