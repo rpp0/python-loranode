@@ -2,3 +2,5 @@
 *.cfg
 samples/
 __pycache__
+dist/
+loranode.egg-info/

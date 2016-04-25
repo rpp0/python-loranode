@@ -32,6 +32,12 @@ CMD_SET_PWR = "radio set pwr"
 CMD_SET_PWRIDX = "mac set pwridx"
 CMD_GET_RXDELAY1 = "mac get rxdelay1"
 CMD_GET_RXDELAY2 = "mac get rxdelay2"
+CMD_GET_CR = "radio get cr"
+CMD_GET_SF = "radio get sf"
+CMD_GET_BW = "radio get bw"
+CMD_SET_CR = "radio set cr"
+CMD_SET_SF = "radio set sf"
+CMD_SET_BW = "radio set bw"
 
 # Status codes
 S_ACCEPTED = "accepted"

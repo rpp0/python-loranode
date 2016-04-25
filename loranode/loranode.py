@@ -1,6 +1,6 @@
 import serial
-from rpyutils import printd, Level, Color, clr
-from commands import *
+from .rpyutils import printd, Level, Color, clr
+from .commands import *
 from time import sleep
 
 class LoRaController():
@@ -154,8 +154,32 @@ class RN2483Controller(LoRaController):
         self.serial_sr(CMD_SET_PWR, str(pwr))
         self.serial_sr(CMD_MAC_RESUME)
 
+    def set_sf(self, sf):
+        self.serial_sr(CMD_MAC_PAUSE)
+        self.serial_sr(CMD_SET_SF, "sf"+str(sf))
+        self.serial_sr(CMD_MAC_RESUME)
+
+    def set_bw(self, bw):
+        self.serial_sr(CMD_MAC_PAUSE)
+        self.serial_sr(CMD_SET_BW, str(bw))
+        self.serial_sr(CMD_MAC_RESUME)
+
+    def set_cr(self, cr):
+        self.serial_sr(CMD_MAC_PAUSE)
+        self.serial_sr(CMD_SET_CR, cr)
+        self.serial_sr(CMD_MAC_RESUME)
+
     def get_pwr(self):
         return self.serial_sr(CMD_GET_PWR)
+
+    def get_sf(self):
+        return self.serial_sr(CMD_GET_SF)
+
+    def get_bw(self):
+        return self.serial_sr(CMD_GET_BW)
+
+    def get_cr(self):
+        return self.serial_sr(CMD_GET_CR)
 
     def set_adr(self, value):
         if self.serial_sr(CMD_SET_ADR, "on" if value else "off"):
