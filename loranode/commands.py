@@ -1,5 +1,5 @@
-# This command resets the module’s configuration data and user EEPPROM to
-# factory # default values and restarts the module. After factoryRESET, the
+# This command resets the module's configuration data and user EEPPROM to
+# factory default values and restarts the module. After factoryRESET, the
 # RN2483 module will automatically reset and all configuration parameters are
 # restored to factory default values.
 CMD_FACTORY_RESET = "sys factoryRESET"
