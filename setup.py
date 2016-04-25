@@ -13,7 +13,7 @@ setup(
     name='loranode',
 
     # TODO: https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.1',
+    version='0.0.2',
 
     description='Python 3 bindings for interfacing with LoRa nodes such as the RN2483.',
     long_description=long_description,

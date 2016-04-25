@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import configparser
-from rpyutils import printd, Level, Color, clr, set_debug_level
+from loranode.rpyutils import printd, Level, Color, clr, set_debug_level
 from loranode import RN2483Controller
 
 # LoRaController ABP based join and ACK test

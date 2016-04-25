@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import struct
-from rpyutils import printd, Level, Color, clr, set_debug_level
+from loranode.rpyutils import printd, Level, Color, clr, set_debug_level
 from threading import Thread, Lock
 from loranode import RN2483Controller
 from time import sleep
