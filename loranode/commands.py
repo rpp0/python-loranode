@@ -38,6 +38,8 @@ CMD_GET_BW = "radio get bw"
 CMD_SET_CR = "radio set cr"
 CMD_SET_SF = "radio set sf"
 CMD_SET_BW = "radio set bw"
+CMD_SET_CRC = "radio set crc"
+CMD_GET_FREQ = "radio get freq"
 
 # Status codes
 S_ACCEPTED = "accepted"

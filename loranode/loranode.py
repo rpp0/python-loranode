@@ -169,6 +169,11 @@ class RN2483Controller(LoRaController):
         self.serial_sr(CMD_SET_CR, cr)
         self.serial_sr(CMD_MAC_RESUME)
 
+    def set_crc(self, crc):
+        self.serial_sr(CMD_MAC_PAUSE)
+        self.serial_sr(CMD_SET_CRC, crc)
+        self.serial_sr(CMD_MAC_RESUME)
+
     def get_pwr(self):
         return self.serial_sr(CMD_GET_PWR)
 
@@ -186,6 +191,9 @@ class RN2483Controller(LoRaController):
             return True
         else:
             return False
+
+    def get_freq(self):
+        return self.serial_sr(CMD_GET_FREQ)
 
     # TODO: Should be a serial send instead of send/receive. The OK
     # is received after the sleep duration
