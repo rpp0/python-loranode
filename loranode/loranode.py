@@ -1,4 +1,5 @@
 import serial
+import binascii
 from .rpyutils import printd, Level, Color, clr
 from .commands import *
 from time import sleep
@@ -186,6 +187,9 @@ class RN2483Controller(LoRaController):
     def get_cr(self):
         return self.serial_sr(CMD_GET_CR)
 
+    def get_crc(self):
+        raise NotImplementedError
+
     def set_adr(self, value):
         if self.serial_sr(CMD_SET_ADR, "on" if value else "off"):
             return True
@@ -200,3 +204,113 @@ class RN2483Controller(LoRaController):
     def sleep(self, ms):
         self.serial_sr(CMD_SLEEP, str(ms))
         sleep(ms/1000)
+
+# Requires latest LoPy firmware.
+# To upgrade: connect pins G23 and GND, press reset and run updater.py script.
+class LoPyController(LoRaController):
+    def __init__(self, port, baudrate=115200, reset=True):
+        self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
+        self.commands_sent = 0
+
+        if reset:
+            self.reset()
+
+    def __del__(self):
+        if self.device.is_open:
+            self.device.close()
+
+    # Interact with LoPy MicroPython VM
+    def serial_sr(self, cmd):
+        if self.device.is_open:
+            self.serial_s(cmd)
+            return self.serial_r()
+        else:
+            printd(clr(Color.RED, "Attempted write to closed port"), Level.CRITICAL)
+
+            return None
+
+    def reset(self):
+        self.serial_s("import machine")
+        self.serial_s("machine.reset()")
+        sleep(5)
+        self.serial_s("import pycom")
+        self.serial_s("import socket")
+        self.serial_s("import binascii")
+        self.serial_s("from network import LoRa")
+        self.serial_s("lora = LoRa(mode=LoRa.LORA, frequency=868100000, tx_power=14, bandwidth=LoRa.BW_125KHZ, sf=7, preamble=8, coding_rate=LoRa.CODING_4_8, power_mode=LoRa.ALWAYS_ON, tx_iq=False, rx_iq=False, adr=False, public=True, tx_retries=1)")
+        self.serial_s("s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)")
+        self.serial_s("s.setblocking(True)")
+
+    def serial_r(self):
+        r = self.device.readline().decode('utf-8').strip()
+        printd(r, Level.DEBUG)
+
+        return r
+
+    def serial_s(self, cmd):
+        cmd += "\r\n"
+        self.device.write(cmd.encode('utf-8'))
+        sleep(0.05)
+        self.commands_sent += 1
+        if self.commands_sent >= 512:
+            self.commands_sent = 0
+            self.reset()
+
+    def join_otaa(self, appkey, appeui, deveui):
+        raise NotImplementedError
+
+    def join_abp(self, nwkskey, appskey, devaddr):
+        raise NotImplementedError
+
+    def send(self, data, port=1, ack=True):
+        raise NotImplementedError
+
+    def send_p2p(self, data):
+        self.serial_s("pycom.rgbled(0x0000ff)")
+        self.serial_s("s.send(binascii.unhexlify(\"" + data + "\"))")
+        self.serial_s("pycom.rgbled(0x000000)")
+
+    def recv_p2p(self):
+        raise NotImplementedError
+
+    def set_pwridx(self, pwridx):
+        raise NotImplementedError
+
+    def set_pwr(self, pwr):
+        raise NotImplementedError
+
+    def set_sf(self, sf):
+        raise NotImplementedError
+
+    def set_bw(self, bw):
+        raise NotImplementedError
+
+    def set_cr(self, cr):
+        raise NotImplementedError
+
+    def set_crc(self, crc):
+        raise NotImplementedError
+
+    def get_pwr(self):
+        raise NotImplementedError
+
+    def get_sf(self):
+        raise NotImplementedError
+
+    def get_bw(self):
+        raise NotImplementedError
+
+    def get_cr(self):
+        raise NotImplementedError
+
+    def get_crc(self):
+        raise NotImplementedError
+
+    def set_adr(self, value):
+        raise NotImplementedError
+
+    def get_freq(self):
+        raise NotImplementedError
+
+    def sleep(self, ms):
+        raise NotImplementedError

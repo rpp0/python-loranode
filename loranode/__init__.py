@@ -1,2 +1,2 @@
-from .loranode import RN2483Controller
+from .loranode import *
 from .commands import *
