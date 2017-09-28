@@ -39,6 +39,7 @@ CMD_SET_CR = "radio set cr"
 CMD_SET_SF = "radio set sf"
 CMD_SET_BW = "radio set bw"
 CMD_SET_CRC = "radio set crc"
+CMD_SET_FREQ = "radio set freq"
 CMD_GET_FREQ = "radio get freq"
 CMD_SET_PRLEN = "radio set prlen"
 

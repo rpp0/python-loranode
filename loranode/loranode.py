@@ -204,6 +204,11 @@ class RN2483Controller(LoRaController):
     def get_freq(self):
         return self.serial_sr(CMD_GET_FREQ)
 
+    def set_freq(self, freq):
+        self.serial_sr(CMD_MAC_PAUSE)
+        self.serial_sr(CMD_SET_FREQ, str(freq))
+        self.serial_sr(CMD_MAC_RESUME)
+
     # TODO: Should be a serial send instead of send/receive. The OK
     # is received after the sleep duration
     def sleep(self, ms):
@@ -224,6 +229,7 @@ class LoPyController(LoRaController):
         self.sf = 7
         self.pwr = 2
         self.bw = "BW_125KHZ"
+        self.freq = 868100000
 
         if reset:
             self.reset()
@@ -253,7 +259,7 @@ class LoPyController(LoRaController):
         self.serial_s("import socket")
         self.serial_s("import binascii")
         self.serial_s("from network import LoRa")
-        self.serial_s("lora = LoRa(mode=LoRa.LORA, frequency=868100000, tx_power=%d, bandwidth=LoRa.%s, sf=%d, preamble=%d, coding_rate=LoRa.%s, power_mode=LoRa.ALWAYS_ON, tx_iq=False, rx_iq=False, adr=False, public=True, tx_retries=1)" % (self.pwr, self.bw, self.sf, self.preamble, self.cr))
+        self.serial_s("lora = LoRa(mode=LoRa.LORA, frequency=%d, tx_power=%d, bandwidth=LoRa.%s, sf=%d, preamble=%d, coding_rate=LoRa.%s, power_mode=LoRa.ALWAYS_ON, tx_iq=False, rx_iq=False, adr=False, public=True, tx_retries=1)" % (self.freq, self.pwr, self.bw, self.sf, self.preamble, self.cr))
         self.serial_s("s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)")
         self.serial_s("s.setblocking(True)")
 
@@ -343,6 +349,10 @@ class LoPyController(LoRaController):
 
     def get_freq(self):
         raise NotImplementedError
+
+    def set_freq(self, freq):
+        self.freq = freq
+        self.serial_s("lora.frequency(%d)" % freq)
 
     def set_prlen(self, value):
         self.preamble = value
