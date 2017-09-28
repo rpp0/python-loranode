@@ -19,22 +19,22 @@ class LoRaController():
         self.joined = False
 
     def join_otaa(self, appkey, appeui, deveui):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def join_abp(self, nwkskey, appskey, devaddr):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def send(self, data, port=1, ack=True):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def recv(self, port=1):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def send_p2p(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def recv_p2p(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 class RN2483Controller(LoRaController):
     def __init__(self, port, baudrate=57600, reset=True):
@@ -196,6 +196,11 @@ class RN2483Controller(LoRaController):
         else:
             return False
 
+    def set_prlen(self, value):
+        self.serial_sr(CMD_MAC_PAUSE)
+        self.serial_sr(CMD_SET_PRLEN, value)
+        self.serial_sr(CMD_MAC_RESUME)
+
     def get_freq(self):
         return self.serial_sr(CMD_GET_FREQ)
 
@@ -207,10 +212,18 @@ class RN2483Controller(LoRaController):
 
 # Requires latest LoPy firmware.
 # To upgrade: connect pins G23 and GND, press reset and run updater.py script.
+# Seemed like kind of a dirty way to communicate with the LoPy, but apparently
+# this is common practice to interface with micropython. See:
+# https://github.com/micropython/micropython/blob/master/tools/pyboard.py
 class LoPyController(LoRaController):
     def __init__(self, port, baudrate=115200, reset=True):
         self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
         self.commands_sent = 0
+        self.cr = "CODING_4_8"
+        self.preamble = 8
+        self.sf = 7
+        self.pwr = 2
+        self.bw = "BW_125KHZ"
 
         if reset:
             self.reset()
@@ -230,6 +243,9 @@ class LoPyController(LoRaController):
             return None
 
     def reset(self):
+        """
+        Initialize the "lora" object and socket for sending and receiving data.
+        """
         self.serial_s("import machine")
         self.serial_s("machine.reset()")
         sleep(5)
@@ -237,7 +253,7 @@ class LoPyController(LoRaController):
         self.serial_s("import socket")
         self.serial_s("import binascii")
         self.serial_s("from network import LoRa")
-        self.serial_s("lora = LoRa(mode=LoRa.LORA, frequency=868100000, tx_power=14, bandwidth=LoRa.BW_125KHZ, sf=7, preamble=8, coding_rate=LoRa.CODING_4_8, power_mode=LoRa.ALWAYS_ON, tx_iq=False, rx_iq=False, adr=False, public=True, tx_retries=1)")
+        self.serial_s("lora = LoRa(mode=LoRa.LORA, frequency=868100000, tx_power=%d, bandwidth=LoRa.%s, sf=%d, preamble=%d, coding_rate=LoRa.%s, power_mode=LoRa.ALWAYS_ON, tx_iq=False, rx_iq=False, adr=False, public=True, tx_retries=1)" % (self.pwr, self.bw, self.sf, self.preamble, self.cr))
         self.serial_s("s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)")
         self.serial_s("s.setblocking(True)")
 
@@ -252,7 +268,7 @@ class LoPyController(LoRaController):
         self.device.write(cmd.encode('utf-8'))
         sleep(0.05)
         self.commands_sent += 1
-        if self.commands_sent >= 512:
+        if self.commands_sent >= 512:  # Workaround for very weird bug
             self.commands_sent = 0
             self.reset()
 
@@ -277,19 +293,35 @@ class LoPyController(LoRaController):
         raise NotImplementedError
 
     def set_pwr(self, pwr):
-        raise NotImplementedError
+        self.pwr = pwr
+        self.reset()
 
     def set_sf(self, sf):
-        raise NotImplementedError
+        self.sf = sf
+        self.serial_s("lora.sf(%d)" % sf)
 
     def set_bw(self, bw):
-        raise NotImplementedError
+        bw_string = "BW_125KHZ"
+        if bw == 250:
+            bw_string = "BW_250KHZ"
+        elif bw == 500:
+            bw_string = "BW_500KHZ"
+        self.bw = bw_string
+        self.serial_s("lora.bandwidth(LoRa.%s)" % bw_string)
 
     def set_cr(self, cr):
-        raise NotImplementedError
+        cr_string = "CODING_4_8"
+        if cr == "4/5":
+            cr_string = "CODING_4_5"
+        elif cr == "4/6":
+            cr_string = "CODING_4_6"
+        elif cr == "4/7":
+            cr_string = "CODING_4_7"
+        self.cr = cr_string
+        self.serial_s("lora.coding_rate(LoRa.%s)" % cr_string)
 
     def set_crc(self, crc):
-        raise NotImplementedError
+        print("Warning: setting of CRC not supported by LoPy API. Keeping enabled.")
 
     def get_pwr(self):
         raise NotImplementedError
@@ -311,6 +343,10 @@ class LoPyController(LoRaController):
 
     def get_freq(self):
         raise NotImplementedError
+
+    def set_prlen(self, value):
+        self.preamble = value
+        self.serial_s("lora.preamble(%d)" % value)
 
     def sleep(self, ms):
         raise NotImplementedError
