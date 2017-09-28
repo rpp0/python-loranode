@@ -1,13 +1,14 @@
 python-loranode
 ===============
 
-Python 3 bindings for interfacing with LoRa nodes such as the RN2483, mDot, iM880A-L, and others. Currently, only the RN2483 modem is supported.
+Python 3 bindings for interfacing with LoRa nodes such as the RN2483, mDot, iM880A-L, and others. Currently, only the Microchip RN2483 and Pycom LoPy modem are supported.
 
 
 Installation
 ------------
 
-`pip install loranode`
+Latest: use `setup.py` in this repository.
+Stable: `pip install loranode`
 
 
 Examples
