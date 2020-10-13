@@ -11,7 +11,7 @@ class Level:
     DEBUG = 3
     BLOAT = 4
 
-VERBOSITY = Level.INFO
+VERBOSITY = Level.DEBUG
 
 
 class Color:
@@ -57,9 +57,12 @@ def set_ip_address(dev, ip):
         printd("Failed to bring device %s up." % dev, Level.CRITICAL)
 
 
-def printd(string, level):
+def printd(string, level, no_end=False):
     if VERBOSITY >= level:
-        print(string)
+        if no_end:
+            print(string, end='')
+        else:
+            print(string)
 
 
 def hex_offset_to_string(byte_array):

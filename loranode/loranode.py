@@ -36,6 +36,7 @@ class LoRaController():
     def recv_p2p(self):
         raise NotImplementedError
 
+
 class RN2483Controller(LoRaController):
     def __init__(self, port, baudrate=57600, reset=True):
         self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
@@ -215,8 +216,58 @@ class RN2483Controller(LoRaController):
         self.serial_sr(CMD_SLEEP, str(ms))
         sleep(ms/1000)
 
+    def eval(self, command):
+        return self.serial_sr(command)
+
+
+class E32Controller(RN2483Controller):
+    def __init__(self, port, baudrate=57600, reset=True):
+        self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
+        self.device.write(b"reset\r")
+
+    def __del__(self):
+        if self.device.is_open:
+            self.device.close()
+
+    def serial_read_until(self, delimiter):
+        read_data = b""
+
+        i = 0
+        while i < len(delimiter):
+            while True:
+                c = self.device.read(1)
+                read_data += c
+
+                if c[0] == delimiter[i]:
+                    break
+                else:
+                    i = 0
+            i += 1
+
+        return read_data
+
+    def serial_sr(self, cmd, args=[]):
+        # Add arguments
+        if isinstance(args, list):
+            for arg in args:
+                cmd += " " + arg
+        else:
+            cmd += " " + args
+        cmd += "\r"
+        cmd = cmd.encode("utf-8")
+
+        before = self.serial_read_until(b"> ")
+        printd(before.decode("utf-8"), Level.DEBUG, True)
+
+        self.device.write(cmd)
+        printd(cmd.decode("utf-8"), Level.DEBUG)
+
+        _ = self.serial_read_until(b"\n")  # Command echo
+        response = self.serial_read_until(b"\n")  # Command echo
+        printd(response.decode("utf-8"), Level.DEBUG, True)
+
 # Requires latest LoPy firmware.
-# To upgrade: connect pins G23 and GND, press reset and run updater.py script.
+# To upgrade: connect pins G23 and GND, press reset and run lopyupdate.py script.
 # Seemed like kind of a dirty way to communicate with the LoPy, but apparently
 # this is common practice to interface with micropython. See:
 # https://github.com/micropython/micropython/blob/master/tools/pyboard.py
@@ -259,9 +310,12 @@ class LoPyController(LoRaController):
         self.serial_s("import socket")
         self.serial_s("import binascii")
         self.serial_s("from network import LoRa")
+        self.serial_s("pycom.heartbeat(False)")
         self.serial_s("lora = LoRa(mode=LoRa.LORA, frequency=%d, tx_power=%d, bandwidth=LoRa.%s, sf=%d, preamble=%d, coding_rate=LoRa.%s, power_mode=LoRa.ALWAYS_ON, tx_iq=False, rx_iq=False, adr=False, public=True, tx_retries=1)" % (self.freq, self.pwr, self.bw, self.sf, self.preamble, self.cr))
         self.serial_s("s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)")
         self.serial_s("s.setblocking(True)")
+
+        self.serial_s("lora.callback(trigger=LoRa.TX_PACKET_EVENT,handler=lambda x: x)")  # Hack to wait for completion of tx
 
     def serial_r(self):
         r = self.device.readline().decode('utf-8').strip()
@@ -287,9 +341,13 @@ class LoPyController(LoRaController):
     def send(self, data, port=1, ack=True):
         raise NotImplementedError
 
-    def send_p2p(self, data):
-        self.serial_s("pycom.rgbled(0x0000ff)")
+    def send_p2p(self, data, wait=True):
+        self.serial_s("pycom.rgbled(0x00ffff)")
         self.serial_s("s.send(binascii.unhexlify(\"" + data + "\"))")
+        if wait:
+            line = self.serial_r()
+            while line != str(int(len(data) / 2)):
+                line = self.serial_r()
         self.serial_s("pycom.rgbled(0x000000)")
 
     def recv_p2p(self):
@@ -299,7 +357,10 @@ class LoPyController(LoRaController):
         raise NotImplementedError
 
     def set_pwr(self, pwr):
-        self.pwr = pwr
+        if pwr < 2:
+            self.pwr = 2
+        else:
+            self.pwr = pwr
         self.reset()
 
     def set_sf(self, sf):
@@ -351,12 +412,15 @@ class LoPyController(LoRaController):
         raise NotImplementedError
 
     def set_freq(self, freq):
-        self.freq = freq
+        self.freq = int(freq * 1e6)
         self.serial_s("lora.frequency(%d)" % freq)
 
     def set_prlen(self, value):
-        self.preamble = value
-        self.serial_s("lora.preamble(%d)" % value)
+        self.preamble = int(value)
+        self.serial_s("lora.preamble(%d)" % self.preamble)
+
+    def eval(self, command):
+        self.serial_s(command)
 
     def sleep(self, ms):
         raise NotImplementedError
