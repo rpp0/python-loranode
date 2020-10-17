@@ -3,6 +3,7 @@ import binascii
 from .rpyutils import printd, Level, Color, clr
 from .commands import *
 from time import sleep
+from threading import Thread
 
 class LoRaController():
     def __init__(self, port):
@@ -220,34 +221,44 @@ class RN2483Controller(LoRaController):
         return self.serial_sr(command)
 
 
+class AsyncSerialReader(Thread):
+    def __init__(self, device, rx_callback):
+        super().__init__()
+        self.setDaemon(True)
+        self.device = device
+        self.rx_callback = rx_callback
+
+    def run(self):
+        while True:
+            line = self.device.readline().decode("utf-8")
+            line = line.strip("\r\n >")
+            if line:
+                data = line.split(" ")
+                if len(data):
+                    cmd = data[0]
+                    if cmd == "radio_rx":
+                        rx_data = data[1]
+                        self.rx_callback(rx_data)
+
+
 class E32Controller(RN2483Controller):
-    def __init__(self, port, baudrate=57600, reset=True):
+    def __init__(self, port, baudrate=57600, rx_callback=None):
         self.device = serial.Serial(port=port, baudrate=baudrate, timeout=5*60)
         self.device.write(b"reset\r")
+        self.rx_callback = rx_callback
+        if rx_callback is None:
+            self.rx_callback = self.rx_callback_print
+        self.reader = AsyncSerialReader(self.device, self.rx_callback)
+        self.reader.start()
+
+    def rx_callback_print(self, rx_data):
+        print("<- " + rx_data)
 
     def __del__(self):
         if self.device.is_open:
             self.device.close()
 
-    def serial_read_until(self, delimiter):
-        read_data = b""
-
-        i = 0
-        while i < len(delimiter):
-            while True:
-                c = self.device.read(1)
-                read_data += c
-
-                if c[0] == delimiter[i]:
-                    break
-                else:
-                    i = 0
-            i += 1
-
-        return read_data
-
-    def serial_sr(self, cmd, args=[]):
-        # Add arguments
+    def serial_s(self, cmd, args=[]):
         if isinstance(args, list):
             for arg in args:
                 cmd += " " + arg
@@ -256,15 +267,8 @@ class E32Controller(RN2483Controller):
         cmd += "\r"
         cmd = cmd.encode("utf-8")
 
-        before = self.serial_read_until(b"> ")
-        printd(before.decode("utf-8"), Level.DEBUG, True)
-
         self.device.write(cmd)
-        printd(cmd.decode("utf-8"), Level.DEBUG)
-
-        _ = self.serial_read_until(b"\n")  # Command echo
-        response = self.serial_read_until(b"\n")  # Command echo
-        printd(response.decode("utf-8"), Level.DEBUG, True)
+        printd("> " + cmd.decode("utf-8"), Level.DEBUG)
 
 # Requires latest LoPy firmware.
 # To upgrade: connect pins G23 and GND, press reset and run lopyupdate.py script.
