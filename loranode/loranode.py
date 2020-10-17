@@ -233,6 +233,7 @@ class AsyncSerialReader(Thread):
             line = self.device.readline().decode("utf-8")
             line = line.strip("\r\n >")
             if line:
+                print(line)
                 data = line.split(" ")
                 if len(data):
                     cmd = data[0]
@@ -266,8 +267,11 @@ class E32Controller(RN2483Controller):
             cmd += " " + args
         cmd += "\r"
         cmd = cmd.encode("utf-8")
+        from time import sleep
 
-        self.device.write(cmd)
+        sleep(1.0)  # TODO fix. Wait a bit before sending so we don't send when a previous command is still executing. Fix by checking for each echoed character.
+        for character in cmd:
+            self.device.write([character])
         printd("> " + cmd.decode("utf-8"), Level.DEBUG)
 
 # Requires latest LoPy firmware.
